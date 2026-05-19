@@ -33,6 +33,12 @@
             min-height: 100dvh;
             overflow: hidden;
             color: #fff;
+            
+            /* --- PROTEKSI TEKS: Mencegah teks diblok/disalin manual oleh user --- */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE10+ */
+            user-select: none;         /* Standard */
         }
 
         body::after {
@@ -85,6 +91,14 @@
             cursor: pointer;
         }
 
+        .single-mode-active .track-hitbox {
+            display: none;
+        }
+        .single-mode-active .track-hitbox.active-track {
+            display: block;
+            flex: 1;
+        }
+
         .track-bar {
             width: 100%;
             height: 3px;
@@ -117,12 +131,14 @@
         .user-meta .timestamp { font-size: 11px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 
         .header-controls { display: flex; align-items: center; gap: 16px; z-index: 50; }
-        .control-btn { background: transparent; border: none; color: white; font-size: 16px; cursor: pointer; padding: 4px; }
+        .control-btn { background: transparent; border: none; color: white; font-size: 18px; cursor: pointer; padding: 6px 10px; }
 
         /* --- NAVIGATION INTERACTION ZONES --- */
         .zone { position: absolute; top: 100px; bottom: 120px; width: 40%; z-index: 20; }
         .zone-left { left: 0; }
         .zone-right { right: 0; }
+
+        .single-mode-active .zone { pointer-events: none; }
 
         /* --- SLIDES VIEWPORT --- */
         .slides-viewport { width: 100%; height: 100%; position: relative; background: #000; }
@@ -199,6 +215,48 @@
             visibility: visible;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* --- PANDUAN POPUP BOX MODAL --- */
+        .guide-modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 150; display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        
+        .guide-modal-overlay.open { opacity: 1; visibility: visible; }
+        
+        .guide-box {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px; padding: 24px; width: 88%; max-width: 340px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .guide-modal-overlay.open .guide-box { transform: scale(1); }
+        
+        .guide-title {
+            font-size: 18px; font-weight: 700; color: var(--accent-gold);
+            display: flex; align-items: center; gap: 10px; margin-bottom: 5px;
+        }
+        
+        .guide-list { list-style: none; margin-top: 15px; }
+        .guide-item { font-size: 13px; line-height: 1.6; color: #e0e0e0; margin-bottom: 16px; }
+        .guide-item strong { color: #fff; font-weight: 700; }
+        
+        .guide-badge {
+            background: rgba(255,255,255,0.15); padding: 2px 6px; 
+            border-radius: 5px; color: var(--accent-gold); font-family: monospace; font-weight: bold;
+        }
+        
+        .guide-close-btn {
+            width: 100%; padding: 12px; background: #ffffff; color: #000;
+            border: none; border-radius: 14px; font-weight: 800; font-size: 14px;
+            cursor: pointer; margin-top: 5px; transition: background 0.2s;
+        }
+        .guide-close-btn:active { background: #dddddd; }
     </style>
 </head>
 <body>
@@ -218,7 +276,34 @@
                 </div>
             </div>
             <div class="header-controls" id="headerControls">
-                <button class="control-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                <button class="control-btn" id="triggerGuideMenu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            </div>
+        </div>
+        
+        <!-- Pop-up Box Panduan Penggunaan Link -->
+        <div class="guide-modal-overlay" id="guideOverlay">
+            <div class="guide-box">
+                <div class="guide-title">
+                    <i class="fa-solid fa-circle-info"></i> Panduan Struktur Link
+                </div>
+                <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.12); margin: 10px 0;">
+                <ul class="guide-list">
+                    <li class="guide-item">
+                        <strong>1. Mode Normal (Bisa Di-geser)</strong><br>
+                        Gunakan parameter angka untuk menentukan slide awal mulai.<br>
+                        Contoh: <span class="guide-badge">?1</span> atau <span class="guide-badge">?2</span>
+                    </li>
+                    <li class="guide-item">
+                        <strong>2. Mode Kunci Tunggal (Lock)</strong><br>
+                        Tambahkan huruf <span style="color:#ffd700;font-weight:700;">l</span> (L kecil) di belakang angka agar story terkunci pada slide itu saja (tidak bisa digeser/otomatis pindah).<br>
+                        Contoh: <span class="guide-badge">?1l</span> atau <span class="guide-badge">?2l</span>
+                    </li>
+                    <li class="guide-item">
+                        <strong>3. Berbagi Cepat</strong><br>
+                        Ketuk ikon pesawat terbang di bagian bawah halaman untuk menyalin tautan slide aktif saat ini secara otomatis.
+                    </li>
+                </ul>
+                <button class="guide-close-btn" id="closeGuideMenu">Mengerti</button>
             </div>
         </div>
         
@@ -244,19 +329,31 @@
                 type: 'image', 
                 url: 'https://raw.githubusercontent.com/keugata/keugata/refs/heads/main/file_000000001.webp', 
                 caption: 'Dia tau susahku. Dia tau kekuranganku. Tapi satu hal yang gak pernah kurang: sayangku ke kamu.', 
-                timeAgo: '1 jam yang lalu' 
+                timeAgo: 'Hanya hiburan' 
             },
             { 
                 type: 'image', 
                 url: 'https://raw.githubusercontent.com/keugata/keugata/refs/heads/main/file_000000002.webp', 
                 caption: 'Tapi dia tetap memilih untuk tidak pergi. Terima kasih banyak, tuan putriku... 👑', 
-                timeAgo: '32 menit yang lalu' 
+                timeAgo: 'Hanya hiburan' 
             },
             { 
                 type: 'image', 
                 url: 'https://raw.githubusercontent.com/keugata/keugata/refs/heads/main/file_000000003.webp', 
                 caption: 'I Love you more sayang ❤️ Selamanya.', 
-                timeAgo: 'Baru saja' 
+                timeAgo: 'Hanya hiburan' 
+            },
+            { 
+                type: 'image', 
+                url: 'https://raw.githubusercontent.com/keugata/keugata/refs/heads/main/file_000000004.webp', 
+                caption: 'Aku tidak meminta untuk dipilih cepat, aku hanya ingin dipilih tanpa ragu.', 
+                timeAgo: 'Hanya hiburan' 
+            },
+            { 
+                type: 'image', 
+                url: 'https://raw.githubusercontent.com/keugata/keugata/refs/heads/main/file_000000005.webp', 
+                caption: 'Aku tak peduli masa lalumu, jika sayangmu setulus ibu, cintaku akan melebihi ayahmu.', 
+                timeAgo: 'Hanya hiburan' 
             }
         ];
 
@@ -270,6 +367,7 @@
         let isLongPressActive = false;
         let touchStartX = 0;
         let touchEndX = 0;
+        let isSingleMode = false;
 
         const viewport = document.getElementById('viewport');
         const barsContainer = document.getElementById('barsContainer');
@@ -279,6 +377,10 @@
         const shareBtn = document.getElementById('shareBtn');
         const footerHub = document.getElementById('footerHub');
         const headerControls = document.getElementById('headerControls');
+        
+        const guideOverlay = document.getElementById('guideOverlay');
+        const triggerGuideMenu = document.getElementById('triggerGuideMenu');
+        const closeGuideMenu = document.getElementById('closeGuideMenu');
 
         function preloadAssets() {
             contentStories.forEach(story => { if (story.type === 'image') new Image().src = story.url; });
@@ -291,6 +393,7 @@
             contentStories.forEach((story, idx) => {
                 const hitbox = document.createElement('div');
                 hitbox.className = 'track-hitbox';
+                hitbox.id = `track-hitbox-${idx}`;
                 hitbox.dataset.index = idx;
                 
                 const track = document.createElement('div');
@@ -317,13 +420,18 @@
         function playSlide(index) {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             
-            if (index >= contentStories.length) index = 0;
-            if (index < 0) index = 0;
+            if (isSingleMode) {
+                index = activeIdx; 
+            } else {
+                if (index >= contentStories.length) index = 0;
+                if (index < 0) index = 0;
+            }
 
             activeIdx = index;
             liveTime.innerText = contentStories[activeIdx].timeAgo;
 
             document.querySelectorAll('.slide-frame').forEach((f, i) => f.classList.toggle('active', i === activeIdx));
+            document.querySelectorAll('.track-hitbox').forEach((t, i) => t.classList.toggle('active-track', i === activeIdx));
 
             contentStories.forEach((_, i) => {
                 const fill = document.getElementById(`bar-fill-${i}`);
@@ -352,7 +460,12 @@
                     currentFill.style.width = `${percent}%`;
 
                     if (timePassed >= SLIDE_DURATION) {
-                        shiftNext();
+                        if (isSingleMode) {
+                            currentFill.style.width = '100%';
+                            cancelAnimationFrame(animationFrameId);
+                        } else {
+                            shiftNext();
+                        }
                     } else {
                         animationFrameId = requestAnimationFrame(update);
                     }
@@ -362,8 +475,8 @@
             animationFrameId = requestAnimationFrame(update);
         }
 
-        function shiftNext() { playSlide(activeIdx + 1); }
-        function shiftPrev() { if (activeIdx > 0) playSlide(activeIdx - 1); else playSlide(0); }
+        function shiftNext() { if(!isSingleMode) playSlide(activeIdx + 1); }
+        function shiftPrev() { if(!isSingleMode) { if (activeIdx > 0) playSlide(activeIdx - 1); else playSlide(0); } }
 
         function pauseTimeline() {
             if (systemPaused) return;
@@ -373,6 +486,7 @@
         }
 
         function resumeTimeline() {
+            if (guideOverlay.classList.contains('open')) return;
             if (systemPaused) {
                 systemPaused = false;
                 runProgressBar();
@@ -380,10 +494,11 @@
         }
 
         const ignoreElements = (e) => {
-            return e.target.closest('#footerHub') || e.target.closest('#headerControls') || e.target.closest('.track-hitbox');
+            return e.target.closest('#footerHub') || e.target.closest('#headerControls') || e.target.closest('.track-hitbox') || e.target.closest('#guideOverlay');
         };
 
         barsContainer.addEventListener('click', (e) => {
+            if (isSingleMode) return; 
             const hitbox = e.target.closest('.track-hitbox');
             if (hitbox) playSlide(parseInt(hitbox.dataset.index));
         });
@@ -427,7 +542,7 @@
             touchEndX = e.changedTouches[0].screenX;
             const swipeDistance = touchStartX - touchEndX;
 
-            if (Math.abs(swipeDistance) > 50) {
+            if (Math.abs(swipeDistance) > 50 && !isSingleMode) {
                 if (swipeDistance > 50) shiftNext();
                 else shiftPrev();
             } else {
@@ -436,11 +551,11 @@
         }, { passive: true });
 
         document.getElementById('rightTap').addEventListener('click', (e) => { 
-            if(!ignoreElements(e) && !isLongPressActive) shiftNext(); 
+            if(!ignoreElements(e) && !isLongPressActive && !isSingleMode) shiftNext(); 
         });
         
         document.getElementById('leftTap').addEventListener('click', (e) => { 
-            if(!ignoreElements(e) && !isLongPressActive) shiftPrev(); 
+            if(!ignoreElements(e) && !isLongPressActive && !isSingleMode) shiftPrev(); 
         });
         
         function showToast() {
@@ -452,7 +567,8 @@
             if (e) { e.preventDefault(); e.stopPropagation(); }
             
             const cleanBaseUrl = window.location.href.split('?')[0];
-            const dynamicShareLink = `${cleanBaseUrl}?${activeIdx + 1}`;
+            const modeSuffix = isSingleMode ? 'l' : '';
+            const dynamicShareLink = `${cleanBaseUrl}?${activeIdx + 1}${modeSuffix}`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(dynamicShareLink).then(() => {
@@ -472,6 +588,11 @@
             textArea.style.top = '0';
             textArea.style.left = '0';
             textArea.style.opacity = '0';
+            
+            // Bypass aturan non-select khusus untuk proses copy otomatis di background
+            textArea.style.webkitUserSelect = 'text';
+            textArea.style.userSelect = 'text';
+            
             document.body.appendChild(textArea);
             textArea.select();
             textArea.setSelectionRange(0, 99999);
@@ -492,18 +613,54 @@
         headerControls.addEventListener('click', (e) => e.stopPropagation());
         headerControls.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
-        // --- RUN ENGINE SYSTEM ---
+        triggerGuideMenu.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            pauseTimeline();
+            guideOverlay.classList.add('open');
+        });
+
+        closeGuideMenu.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            guideOverlay.classList.remove('open');
+            resumeTimeline();
+        });
+
+        guideOverlay.addEventListener('click', (e) => {
+            if (e.target === guideOverlay) {
+                guideOverlay.classList.remove('open');
+                resumeTimeline();
+            }
+        });
+
+        // --- INTELLIGENT ROUTING ENGINE ---
         preloadAssets();
         buildSystem();
 
-        const queryParam = window.location.search.substring(1); 
-        const slideParam = parseInt(queryParam);
+        const rawString = window.location.search.substring(1).split('&')[0];
+        const rawQuery = rawString.trim().toLowerCase();
         
         let startSlideIndex = 0;
-        if (!isNaN(slideParam) && slideParam > 0 && slideParam <= contentStories.length) {
-            startSlideIndex = slideParam - 1; 
+        
+        if (rawQuery) {
+            if (rawQuery.endsWith('l')) {
+                isSingleMode = true;
+                mainWrapper.classList.add('single-mode-active');
+                
+                const slideNum = parseInt(rawQuery.slice(0, -1));
+                if (!isNaN(slideNum) && slideNum > 0 && slideNum <= contentStories.length) {
+                    startSlideIndex = slideNum - 1;
+                }
+            } else {
+                const slideNum = parseInt(rawQuery);
+                if (!isNaN(slideNum) && slideNum > 0 && slideNum <= contentStories.length) {
+                    startSlideIndex = slideNum - 1;
+                }
+            }
         }
 
+        activeIdx = startSlideIndex;
         playSlide(startSlideIndex);
     </script>
 </body>
