@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>POS Bakso Putra Solo - Auto Responsif</title>
     <style>
         :root {
@@ -30,6 +30,7 @@
         html, body {
             width: 100vw;
             height: 100vh;
+            height: 100dvh; /* MENGUNCI TINGGI BERSIH DI ATAS NAVIGASI HP */
             overflow: hidden; 
             background-color: var(--bg-main);
             color: var(--text-dark);
@@ -69,6 +70,7 @@
             gap: 4px;
             overflow: hidden;
             height: calc(100vh - 35px);
+            height: calc(100dvh - 35px); /* Menyesuaikan dinamis */
             min-height: 0; 
         }
 
@@ -191,7 +193,7 @@
             flex-direction: column;
             overflow: hidden;
             border: 1px solid #cbd5e1;
-            min-height: 0; /* Penting: Mencegah flexbox mendorong container keluar layar */
+            min-height: 0; 
         }
 
         .receipt-header {
@@ -252,7 +254,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            flex: 0 0 auto; /* Tetap berada di bawah secara konsisten */
+            flex: 0 0 auto; 
         }
 
         .row-total {
@@ -339,9 +341,7 @@
         }
         .btn-clear-all:active { background: #000; }
 
-        /* ========================================================
-           OPTIMALISASI KHUSUS MODE LANDSCAPE / TINGGI LAYAR PENDEK
-           ======================================================== */
+        /* OPTIMALISASI KHUSUS MODE LANDSCAPE / TINGGI LAYAR PENDEK */
         @media (max-height: 540px) {
             header { 
                 height: 24px; 
@@ -352,6 +352,7 @@
             
             .main-workspace { 
                 height: calc(100vh - 24px); 
+                height: calc(100dvh - 24px); /* Presisi anti-mentok navigasi */
                 padding: 2px; 
                 gap: 2px; 
             }
