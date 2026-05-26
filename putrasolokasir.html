@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Bakso Putra Solo - Auto Responsif</title>
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-light: #34d399; 
+            --secondary: #f59e0b;
+            --bg-main: #cbd5e1; 
+            --bg-panel: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --lcd-bg: #0f172a;
+            --lcd-text: #10b981;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; 
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER STATIS */
+        header {
+            background: linear-gradient(90deg, #1e293b, var(--text-dark));
+            color: white;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+            flex: 0 0 auto;
+            height: 35px;
+        }
+
+        header h1 {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--secondary);
+        }
+
+        header span { font-size: 10px; color: #94a3b8; }
+
+        /* WORKSPACE UTAMA */
+        .main-workspace {
+            display: flex;
+            flex-direction: row; 
+            flex: 1;
+            padding: 4px;
+            gap: 4px;
+            overflow: hidden;
+            height: calc(100vh - 35px);
+            min-height: 0; 
+        }
+
+        /* PANEL MENU (KIRI) */
+        .panel-left {
+            flex: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .category-block {
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            background: var(--bg-panel);
+            border-radius: 6px;
+            padding: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            min-height: 0;
+        }
+
+        .category-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #e2e8f0;
+            flex: 0 0 auto;
+        }
+
+        .menu-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(2, 1fr);    
+            gap: 4px;
+            min-height: 0;
+        }
+
+        .btn-menu-item {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s ease;
+            padding: 2px;
+            min-height: 0;
+        }
+
+        .btn-menu-item:active {
+            background: #d1fae5;
+            border-color: var(--primary);
+            transform: scale(0.95);
+        }
+
+        .btn-menu-item h3 {
+            font-size: clamp(9px, 2.3vw, 12px);
+            text-align: center;
+            margin-bottom: 2px;
+            color: var(--text-dark);
+            line-height: 1.1;
+            word-break: break-word;
+        }
+
+        .btn-menu-item .price {
+            font-size: clamp(9px, 1.8vw, 11px);
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .click-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 900;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            display: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            z-index: 5;
+            border: 1.5px solid white;
+        }
+
+        /* PANEL KASIR (KANAN) */
+        .panel-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 140px; 
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* STRUK */
+        .receipt-container {
+            flex: 1;
+            background: #fffdf8; 
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            min-height: 0; /* Penting: Mencegah flexbox mendorong container keluar layar */
+        }
+
+        .receipt-header {
+            background: #f1f5f9;
+            padding: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            text-align: center;
+            color: var(--text-muted);
+            border-bottom: 2px dashed #cbd5e1;
+            flex: 0 0 auto;
+        }
+
+        .receipt-list {
+            flex: 1;
+            padding: 4px;
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-height: 0;
+        }
+
+        .receipt-list::-webkit-scrollbar { width: 4px; }
+        .receipt-list::-webkit-scrollbar-track { background: transparent; }
+        .receipt-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: clamp(10px, 2vw, 12px);
+            padding: 5px 4px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #f1f5f9;
+            flex: 0 0 auto; 
+        }
+        .receipt-item:active { background: #fee2e2; border-color: var(--danger); }
+        
+        .qty-text { 
+            font-weight: 900; 
+            color: var(--primary); 
+            margin-right: 4px;
+            background: #e2e8f0;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        /* KALKULATOR */
+        .calc-container {
+            background: var(--bg-panel);
+            border-radius: 6px;
+            padding: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 0 0 auto; /* Tetap berada di bawah secara konsisten */
+        }
+
+        .row-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: clamp(13px, 2.5vw, 16px);
+            font-weight: 900;
+            color: var(--danger);
+            padding: 0 2px;
+        }
+
+        .calc-input-display {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: clamp(14px, 3.5vw, 20px);
+            font-weight: 900;
+            text-align: right;
+            border: none;
+            border-radius: 5px;
+            background: var(--lcd-bg);
+            color: var(--lcd-text);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .grid-quick {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1fr 1fr;
+            gap: 4px;
+        }
+
+        .btn-quick {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 6px 0;
+            font-size: clamp(9px, 1.8vw, 11px);
+            font-weight: 800;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+        .btn-quick.pas { background: var(--primary); color: white; border: none; }
+        .btn-quick:active { filter: brightness(0.9); }
+
+        .grid-numpad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 4px;
+        }
+
+        .btn-num {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 8px 0;
+            font-size: clamp(12px, 3vw, 15px);
+            font-weight: 800;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+        .btn-num.clear { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        .btn-num:active { background: #e2e8f0; }
+
+        .row-change {
+            display: flex;
+            justify-content: space-between;
+            font-size: clamp(11px, 2vw, 13px);
+            font-weight: 900;
+            background: #f8fafc;
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .btn-clear-all {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            font-weight: 800;
+            font-size: clamp(11px, 2vw, 13px);
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-clear-all:active { background: #000; }
+
+        /* ========================================================
+           OPTIMALISASI KHUSUS MODE LANDSCAPE / TINGGI LAYAR PENDEK
+           ======================================================== */
+        @media (max-height: 540px) {
+            header { 
+                height: 24px; 
+                padding: 2px 10px; 
+            }
+            header h1 { font-size: 11px; }
+            header span { font-size: 8px; }
+            
+            .main-workspace { 
+                height: calc(100vh - 24px); 
+                padding: 2px; 
+                gap: 2px; 
+            }
+            .panel-left, .panel-right { gap: 2px; }
+            
+            .category-block { padding: 2px; }
+            .category-title { font-size: 9px; margin-bottom: 2px; padding-bottom: 0px; }
+            .menu-grid { gap: 2px; }
+            
+            .btn-menu-item h3 { font-size: 9px; margin-bottom: 0px; }
+            .btn-menu-item .price { font-size: 8px; }
+            
+            .receipt-header { font-size: 8px; padding: 2px; }
+            .receipt-item { padding: 3px 4px; font-size: 9px; }
+            
+            .calc-container { padding: 3px; gap: 2px; }
+            .row-total { font-size: 11px; }
+            .calc-input-display { font-size: 12px; padding: 2px 6px; }
+            .btn-quick { padding: 2px 0; font-size: 8px; }
+            .btn-num { padding: 2px 0; font-size: 10px; }
+            .row-change { font-size: 9px; padding: 1px 4px; }
+            .btn-clear-all { padding: 3px; font-size: 9px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BAKSO PUTRA SOLO</h1>
+        <span>Mesin Kasir Lipat Layar</span>
+    </header>
+
+    <div class="main-workspace">
+        
+        <div class="panel-left" id="menu-buttons-container"></div>
+
+        <div class="panel-right">
+            
+            <div class="receipt-container">
+                <div class="receipt-header">TEKAN ITEM UNTUK KURANGI JUMLAH</div>
+                <div class="receipt-list" id="receipt-list">
+                    <div style="color: #cbd5e1; text-align: center; margin-top: 20px; font-size: 11px; font-weight: 600;">
+                        Struk Kosong
+                    </div>
+                </div>
+            </div>
+
+            <div class="calc-container">
+                <div class="row-total">
+                    <span>Total</span>
+                    <span id="label-total">Rp 0</span>
+                </div>
+
+                <input type="text" id="calc-display" class="calc-input-display" readonly value="Rp 0">
+                
+                <div class="grid-quick">
+                    <button class="btn-quick pas" onclick="cashQuick('pas')">PAS</button>
+                    <button class="btn-quick" onclick="cashQuick(20000)">20K</button>
+                    <button class="btn-quick" onclick="cashQuick(50000)">50K</button>
+                    <button class="btn-quick" onclick="cashQuick(100000)">100K</button>
+                </div>
+
+                <div class="grid-numpad">
+                    <button class="btn-num" onclick="cashPress('7')">7</button>
+                    <button class="btn-num" onclick="cashPress('8')">8</button>
+                    <button class="btn-num" onclick="cashPress('9')">9</button>
+                    <button class="btn-num clear" onclick="cashPress('C')">C</button>
+                    
+                    <button class="btn-num" onclick="cashPress('4')">4</button>
+                    <button class="btn-num" onclick="cashPress('5')">5</button>
+                    <button class="btn-num" onclick="cashPress('6')">6</button>
+                    <button class="btn-num" style="font-size: 10px;" onclick="cashPress('000')">000</button>
+
+                    <button class="btn-num" onclick="cashPress('1')">1</button>
+                    <button class="btn-num" onclick="cashPress('2')">2</button>
+                    <button class="btn-num" onclick="cashPress('3')">3</button>
+                    <button class="btn-num" onclick="cashPress('0')">0</button>
+                </div>
+
+                <div class="row-change">
+                    <span style="color: var(--text-muted);">Kembali</span>
+                    <span id="label-kembalian" style="color: var(--primary);">Rp 0</span>
+                </div>
+
+                <button class="btn-clear-all" onclick="clearTransaksi()">Selesai / Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const menuData = [
+            {
+                category: "🍜 BAKSO",
+                items: [
+                    { id: 'b1', name: 'Besar', price: 20000 },
+                    { id: 'b2', name: 'Biasa', price: 15000 },
+                    { id: 'b3', name: 'Urat', price: 20000 },
+                    { id: 'b4', name: 'Mercon', price: 15000 },
+                    { id: 'b5', name: 'Telor', price: 15000 },
+                    { id: 'b6', name: 'Stgh Porsi', price: 10000 }
+                ]
+            },
+            {
+                category: "🍝 MIE AYAM",
+                items: [
+                    { id: 'm1', name: 'Biasa', price: 10000 },
+                    { id: 'm2', name: 'Bks Besar', price: 30000 },
+                    { id: 'm3', name: 'Bks Biasa', price: 15000 },
+                    { id: 'm4', name: 'Bks Urat', price: 30000 },
+                    { id: 'm5', name: 'Bks Mercon', price: 20000 },
+                    { id: 'm6', name: 'Bks Telor', price: 20000 }
+                ]
+            },
+            {
+                category: "🥤 MINUMAN & LAIN",
+                items: [
+                    { id: 'd1', name: 'Sosro', price: 5000 },
+                    { id: 'd2', name: 'Teh Pucuk', price: 5000 },
+                    { id: 'd3', name: 'Le Mineral', price: 4000 },
+                    { id: 'd4', name: 'Es Teh', price: 5000 },
+                    { id: 'd5', name: 'Es Jeruk', price: 5000 },
+                    { id: 'd6', name: 'Krupuk', price: 2000 }
+                ]
+            }
+        ];
+
+        let menuClickCounts = {};
+        let totalTagihan = 0;
+        let stringUangBayar = "";
+
+        const formatRupiah = (num) => {
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(num);
+        };
+
+        const renderMenuButtons = () => {
+            const area = document.getElementById('menu-buttons-container');
+            let html = '';
+
+            menuData.forEach(cat => {
+                html += `<div class="category-block">
+                            <div class="category-title">${cat.category}</div>
+                            <div class="menu-grid">`;
+                
+                cat.items.forEach(item => {
+                    menuClickCounts[item.id] = 0; 
+                    html += `
+                        <button class="btn-menu-item" onclick="tambahItem('${item.id}')">
+                            <h3>${item.name}</h3>
+                            <span class="price">${formatRupiah(item.price)}</span>
+                            <span class="click-badge" id="badge-${item.id}">0</span>
+                        </button>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            });
+            area.innerHTML = html;
+        };
+
+        const tambahItem = (id) => {
+            menuClickCounts[id]++;
+            hitungDanRenderStruk();
+            
+            const listEl = document.getElementById('receipt-list');
+            setTimeout(() => {
+                listEl.scrollTop = listEl.scrollHeight;
+            }, 30);
+        };
+
+        const kurangiItem = (id) => {
+            if (menuClickCounts[id] > 0) {
+                menuClickCounts[id]--;
+                hitungDanRenderStruk();
+            }
+        };
+
+        const hitungDanRenderStruk = () => {
+            totalTagihan = 0;
+            let htmlStruk = '';
+            
+            menuData.forEach(cat => {
+                cat.items.forEach(item => {
+                    const qty = menuClickCounts[item.id];
+                    
+                    const badge = document.getElementById(`badge-${item.id}`);
+                    if (badge) {
+                        badge.innerText = qty;
+                        badge.style.display = qty > 0 ? 'flex' : 'none';
+                    }
+
+                    if (qty > 0) {
+                        const subtotal = qty * item.price;
+                        totalTagihan += subtotal;
+                        
+                        htmlStruk += `
+                            <div class="receipt-item" onclick="kurangiItem('${item.id}')">
+                                <div><span class="qty-text">${qty}x</span>${item.name}</div>
+                                <strong>${formatRupiah(subtotal)}</strong>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            const listEl = document.getElementById('receipt-list');
+            if(htmlStruk === '') {
+                listEl.innerHTML = `<div style="color: #cbd5e1; text-align: center; margin-top: 20px; font-size: 11px; font-weight: 600;">Struk Kosong</div>`;
+            } else {
+                listEl.innerHTML = htmlStruk;
+            }
+            
+            document.getElementById('label-total').innerText = 'Rp ' + formatRupiah(totalTagihan);
+            updateKalkulatorDisplay();
+        };
+
+        const cashPress = (key) => {
+            if (key === 'C') stringUangBayar = "";
+            else if (key === '000') { if (stringUangBayar !== "") stringUangBayar += "000"; } 
+            else stringUangBayar += key;
+            updateKalkulatorDisplay();
+        };
+
+        const cashQuick = (val) => {
+            stringUangBayar = (val === 'pas') ? totalTagihan.toString() : val.toString();
+            updateKalkulatorDisplay();
+        };
+
+        const updateKalkulatorDisplay = () => {
+            const bayar = parseInt(stringUangBayar) || 0;
+            document.getElementById('calc-display').value = bayar > 0 ? 'Rp ' + formatRupiah(bayar) : "Rp 0";
+
+            const kembalian = bayar - totalTagihan;
+            const kembaliEl = document.getElementById('label-kembalian');
+
+            if (bayar === 0) {
+                kembaliEl.innerText = "Rp 0";
+                kembaliEl.style.color = "var(--text-muted)";
+            } else if (kembalian < 0) {
+                kembaliEl.innerText = "Kurang " + formatRupiah(Math.abs(kembalian));
+                kembaliEl.style.color = "var(--danger)";
+            } else {
+                kembaliEl.innerText = 'Rp ' + formatRupiah(kembalian);
+                kembaliEl.style.color = "var(--primary)";
+            }
+        };
+
+        const clearTransaksi = () => {
+            stringUangBayar = "";
+            for (let id in menuClickCounts) {
+                menuClickCounts[id] = 0;
+            }
+            hitungDanRenderStruk();
+        };
+
+        window.onload = renderMenuButtons;
+    </script>
+</body>
+</html>
